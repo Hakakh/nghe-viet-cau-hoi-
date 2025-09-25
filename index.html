@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spelling Game: Playground Fun</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* New Playground Fun theme */
+            --primary-color: #3498db; /* Blue */
+            --primary-dark: #2980b9;
+            --accent-color: #f1c40f; /* Yellow */
+            --secondary-color: #2ecc71; /* Green */
+            --background-gradient: linear-gradient(135deg, #aed6f1 0%, #d5f5e3 100%); /* Light blue to light green */
+            --container-bg: rgba(255, 255, 255, 0.95);
+            --text-color: #2c3e50; /* Dark Blue-Gray */
+            --light-text: #7f8c8d; /* Gray */
+            --success-color: #27ae60; /* Green */
+            --error-color: #e74c3c; /* Red */
+            --border-color: #ecf0f1;
+            --light-bg-highlight: #e8f6fd;
+        }
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Poppins', sans-serif;
+            background: var(--background-gradient);
+            min-height: 100vh;
+            margin: 0;
+            padding: 10px;
+            overflow: hidden; /* Important for bubble effect */
+            color: var(--text-color);
+        }
+        #effect-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 100;
+        }
+        #game-container {
+            text-align: center;
+            background: var(--container-bg);
+            backdrop-filter: blur(2px);
+            padding: 25px 30px;
+            border-radius: 24px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 680px;
+            position: relative;
+            border: 2px solid #fff;
+            z-index: 1;
+        }
+        h1 {
+            font-family: 'Fredoka', sans-serif;
+            font-size: clamp(28px, 6vw, 40px);
+            margin-bottom: 10px;
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+        p {
+            font-size: clamp(16px, 4.2vw, 18px);
+            line-height: 1.6;
+            margin-top: 0;
+        }
+        #vietnamese-translation {
+            font-size: clamp(18px, 5vw, 22px);
+            font-weight: 600;
+            color: var(--primary-dark);
+            margin: 20px 0 10px 0;
+            padding: 10px 15px;
+            background-color: var(--light-bg-highlight);
+            border-radius: 12px;
+            min-height: 30px;
+            user-select: none; /* Prevent text selection */
+        }
+        input[type="text"] {
+            padding: 14px 20px;
+            font-size: clamp(16px, 4.5vw, 18px);
+            width: 100%;
+            max-width: 500px;
+            margin: 20px 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            background-color: #FFF;
+            color: var(--text-color);
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        input[type="text"]::placeholder {
+            color: #bdc3c7;
+        }
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 8px rgba(52, 152, 219, 0.5);
+        }
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 10px;
+        }
+        button {
+            padding: 12px 25px;
+            font-size: clamp(15px, 4.2vw, 17px);
+            cursor: pointer;
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 700;
+            transition: background-color 0.3s, transform 0.2s, box-shadow 0.3s;
+        }
+        .btn-play { background-color: var(--secondary-color); }
+        .btn-play:hover:not(:disabled) { background-color: #27ae60; box-shadow: 0 4px 15px rgba(46, 204, 113, 0.4); transform: translateY(-2px); }
+
+        .btn-check { background-color: var(--primary-color); }
+        .btn-check:hover:not(:disabled) { background-color: var(--primary-dark); box-shadow: 0 4px 15px rgba(52, 152, 219, 0.4); transform: translateY(-2px); }
+        
+        .btn-hint { background-color: var(--accent-color); color: var(--text-color); }
+        .btn-hint:hover:not(:disabled) { background-color: #f39c12; box-shadow: 0 4px 15px rgba(241, 196, 15, 0.4); transform: translateY(-2px); }
+        
+        .btn-reset { background-color: var(--light-text); }
+        .btn-reset:hover:not(:disabled) { background-color: #95a5a6; box-shadow: 0 4px 15px rgba(127, 140, 141, 0.4); transform: translateY(-2px); }
+
+        button:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+        #hint {
+            color: var(--text-color); /* Changed from --light-text for better visibility */
+            font-style: italic;
+            font-weight: 600;
+            margin-top: 15px;
+            font-size: clamp(14px, 3.8vw, 16px);
+            user-select: none;
+            line-height: 1.5;
+            min-height: 22px;
+        }
+        .progress-display {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            background-color: var(--light-bg-highlight);
+            border-radius: 12px;
+            padding: 10px 15px;
+            margin-top: 20px;
+        }
+        .progress-display p {
+            font-size: clamp(18px, 4.5vw, 20px);
+            font-weight: 700;
+            color: var(--primary-dark);
+            margin: 0;
+        }
+        #result {
+            font-size: clamp(16px, 4.2vw, 19px);
+            font-weight: 600;
+            margin-top: 15px;
+            min-height: 27px;
+        }
+        .particle {
+            position: absolute;
+            bottom: -50px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.7);
+            opacity: 0;
+            animation: bubble-rise 4s ease-in-out forwards;
+        }
+        @keyframes bubble-rise {
+            0% {
+                transform: translateY(0) translateX(0) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100vh) translateX(var(--x-end)) scale(1.5);
+                opacity: 0;
+            }
+        }
+        .modal {
+            display: none; position: fixed; z-index: 200; left: 0; top: 0; width: 100%; height: 100%;
+            overflow: auto; background-color: rgba(0,0,0,0.7); align-items: center; justify-content: center;
+        }
+        .modal-content {
+            background-color: #fff; color: var(--text-color); margin: auto; padding: 20px; border: 2px solid var(--border-color);
+            width: 90%; max-width: 600px; border-radius: 16px; max-height: 80vh; overflow-y: auto;
+        }
+        .modal-content h2 { color: var(--primary-dark); }
+        .modal-content ul { list-style: none; padding: 0; }
+        .modal-content li { background: var(--light-bg-highlight); border-radius: 8px; padding: 10px; margin-bottom: 10px; text-align: left; border: 1px solid var(--border-color); }
+        .modal-content li strong { color: var(--primary-dark); }
+        .close-button { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
+        .error-message {
+            color: var(--error-color);
+            font-weight: 600;
+            margin-top: -10px;
+            margin-bottom: 10px;
+            font-size: 14px;
+            min-height: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="effect-container"></div>
+    <div id="game-container">
+        <h1>Welcome to Playground Fun!</h1>
+        <p>Please enter your name to start.</p>
+        <input type="text" id="playerNameInput" placeholder="Your Name">
+        <!-- New element to show error message instead of an alert -->
+        <p id="name-error" class="error-message"></p>
+        <button class="btn-check" onclick="submitName()">Start Game</button>
+    </div>
+
+    <div id="reviewModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeReviewModal()">&times;</span>
+            <h2>Review Your Mistakes</h2>
+            <ul id="mistakeList"></ul>
+        </div>
+    </div>
+
+    <script>
+        const sentences = [
+            { en: "When do they go to the beach?", vi: "Khi nào họ đi ra biển?" },
+            { en: "They go to the beach on the summer holidays", vi: "Họ đi ra biển vào kỳ nghỉ hè" },
+            { en: "Where do they stay?", vi: "Họ ở đâu?" },
+            { en: "They stay in a hotel.", vi: "Họ ở trong một khách sạn." },
+            { en: "Who swam in the lake?", vi: "Ai đã bơi trong hồ?" },
+            { en: "The children swam in the lake.", vi: "Những đứa trẻ đã bơi trong hồ." },
+            { en: "What fell of the table?", vi: "Cái gì đã rơi khỏi bàn?" },
+            { en: "The glass fell of the table.", vi: "Cái ly đã rơi khỏi bàn." },
+            { en: "What did they see at the zoo?", vi: "Họ đã nhìn thấy gì ở sở thú?" },
+            { en: "They saw lions and tigers at the zoo.", vi: "Họ đã nhìn thấy sư tử và hổ ở sở thú." },
+            { en: "What time did he leave the party?", vi: "Anh ấy đã rời bữa tiệc lúc mấy giờ?" },
+            { en: "He left the party at 11o’clock.", vi: "Anh ấy đã rời bữa tiệc lúc 11 giờ." },
+            { en: "Where did John go last Sunday?", vi: "Chủ nhật tuần trước John đã đi đâu?" },
+            { en: "John went to the beach last Sunday.", vi: "Chủ nhật tuần trước John đã đi ra biển." },
+            { en: "What did he give her for her birthday?", vi: "Anh ấy đã tặng gì cho cô ấy vào ngày sinh nhật?" },
+            { en: "He gave her a bunch of flowers for her birthday.", vi: "Anh ấy đã tặng cô ấy một bó hoa vào ngày sinh nhật." },
+            { en: "Where did the company send the new worker to?", vi: "Công ty đã gửi công nhân mới đến đâu?" },
+            { en: "The company sent the new worker to California .", vi: "Công ty đã gửi công nhân mới đến California." },
+            { en: "What did your sister dream about last night?", vi: "Tối qua chị/em gái bạn đã mơ về cái gì?" },
+            { en: "My sister dreamt about the monster last night.", vi: "Tối qua chị/em gái tôi đã mơ về con quái vật." },
+            { en: "When did your grandmother hear a loud scream?", vi: "Bà bạn đã nghe thấy một tiếng hét lớn khi nào?" },
+            { en: "My grandmother heard a loud scream last night.", vi: "Bà tôi đã nghe thấy một tiếng hét lớn vào tối qua." },
+            { en: "Where did they go?", vi: "Họ đã đi đâu?" },
+            { en: "We went to the History Museum.", vi: "Chúng tôi đã đi đến Bảo tàng Lịch sử." },
+            { en: "Why did he fall?", vi: "Tại sao anh ấy ngã?" },
+            { en: "He fell because he slipped on a banana peel.", vi: "Anh ấy ngã vì anh ấy trượt vỏ chuối." },
+            { en: "Why was the teacher angry?", vi: "Tại sao giáo viên lại tức giận?" },
+            { en: "The teacher was angry because he didn’t do his homework.", vi: "Giáo viên tức giận vì anh ấy đã không làm bài tập về nhà." },
+            { en: "How long did it take you to get to school?", vi: "Bạn đã mất bao lâu để đến trường?" },
+            { en: "It took us about half an hour to get to school.", vi: "Chúng tôi mất khoảng nửa giờ để đến trường." },
+            { en: "When did she last ride a bike?", vi: "Lần cuối cùng cô ấy đạp xe là khi nào?" },
+            { en: "She last rode a bike two weeks ago.", vi: "Cô ấy đã đạp xe lần cuối cách đây hai tuần." },
+            { en: "How much cheese did you buy?", vi: "Bạn đã mua bao nhiêu phô mai?" },
+            { en: "I bought half a kilo of cheese.", vi: "Tôi đã mua nửa ký phô mai." },
+            { en: "What did he do two days ago?", vi: "Anh ấy đã làm gì cách đây hai ngày?" },
+            { en: "He took his driving test two days ago.", vi: "Anh ấy đã đi thi bằng lái xe cách đây hai ngày." },
+            { en: "Who did he meet for coffee?", vi: "Anh ấy đã gặp ai để uống cà phê?" },
+            { en: "He met Linda for coffee.", vi: "Anh ấy đã gặp Linda để uống cà phê." },
+            { en: "When were you born?", vi: "Bạn đã sinh ra khi nào?" },
+            { en: "I was born in 1964.", vi: "Tôi đã sinh ra vào năm 1964." },
+            { en: "When did your cousin start sailing?", vi: "Anh/chị họ bạn đã bắt đầu chèo thuyền buồm khi nào?" },
+            { en: "My cousin started sailing six months ago.", vi: "Anh/chị họ tôi đã bắt đầu chèo thuyền buồm cách đây sáu tháng." },
+            { en: "Who did you go the cinema with?", vi: "Bạn đã đi xem phim với ai?" },
+            { en: "I went to the cinema with my cousins.", vi: "Tôi đã đi xem phim với các anh/chị họ của mình." },
+            { en: "How long did you stay in New Zealand?", vi: "Bạn đã ở New Zealand bao lâu?" },
+            { en: "I stayed in New Zealand for six months.", vi: "Tôi đã ở New Zealand trong sáu tháng." },
+            { en: "Why did she call the firemen?", vi: "Tại sao cô ấy đã gọi lính cứu hỏa?" },
+            { en: "She called the firemen because her cat stuck in a tree.", vi: "Cô ấy đã gọi lính cứu hỏa vì con mèo của cô ấy bị mắc kẹt trên cây." },
+            { en: "How many kilos of oranges did you buy?", vi: "Bạn đã mua bao nhiêu ký cam?" },
+            { en: "I bought two kilos of oranges.", vi: "Tôi đã mua hai ký cam." },
+            { en: "Who did John write about?", vi: "John đã viết về ai?" },
+            { en: "John wrote about his grandparents.", vi: "John đã viết về ông bà của mình." },
+            { en: "What did you do last night?", vi: "Tối qua bạn đã làm gì?" },
+            { en: "I watched a very good film on TV last night.", vi: "Tối qua tôi đã xem một bộ phim rất hay trên TV." },
+            { en: "What did she make for her mother?", vi: "Cô ấy đã làm gì cho mẹ cô ấy?" },
+            { en: "She made some coffee for her mother.", vi: "Cô ấy đã pha một ít cà phê cho mẹ cô ấy." },
+            { en: "Who did Susan give the money to?", vi: "Susan đã đưa tiền cho ai?" },
+            { en: "Susan gave the money to her brother.", vi: "Susan đã đưa tiền cho anh trai cô ấy." },
+            { en: "How did we go to school?", vi: "Chúng ta đã đi học bằng cách nào?" },
+            { en: "We went to school by bus.", vi: "Chúng tôi đã đi học bằng xe buýt." },
+            { en: "Why was you tired yesterday morning?", vi: "Tại sao bạn đã mệt mỏi vào sáng hôm qua?" },
+            { en: "I was tired yesterday evening because I worked very hard.", vi: "Tôi đã mệt mỏi vào tối hôm qua vì tôi đã làm việc rất chăm chỉ." },
+            { en: "How many people did Mary invite to the party?", vi: "Mary đã mời bao nhiêu người đến bữa tiệc?" },
+            { en: "Mary invited a lot of people to the party.", vi: "Mary đã mời rất nhiều người đến bữa tiệc." },
+            { en: "Did you go to the cinema last night?", vi: "Tối qua bạn đã đi xem phim không?" },
+            { en: "No, we didn’t go to the cinema last night.", vi: "Không, tối qua chúng tôi đã không đi xem phim." },
+            { en: "Where did Shakira grow up?", vi: "Shakira đã lớn lên ở đâu?" },
+            { en: "Shakira grew up in Colombia.", vi: "Shakira đã lớn lên ở Colombia." },
+            { en: "Who did he go on holiday with?", vi: "Anh ấy đã đi nghỉ cùng ai?" },
+            { en: "He went on holiday with his friends.", vi: "Anh ấy đã đi nghỉ cùng bạn bè của mình." },
+            { en: "What did she do?", vi: "Cô ấy đã làm gì?" },
+            { en: "She didn’t do anything.", vi: "Cô ấy đã không làm gì cả." },
+            { en: "Whose dictionary did you borrow?", vi: "Bạn đã mượn từ điển của ai?" },
+            { en: "I borrowed my teacher’s dictionary.", vi: "Tôi đã mượn từ điển của giáo viên của tôi." },
+            { en: "Who gave money to Mike?", vi: "Ai đã đưa tiền cho Mike?" },
+            { en: "Someone gave some money to Mike.", vi: "Ai đó đã đưa một ít tiền cho Mike." },
+            { en: "Who did anyone help with homework yesterday?", vi: "Ai đã giúp ai đó làm bài tập về nhà vào hôm qua?" },
+            { en: "Someone helped John with his homework yesterday.", vi: "Ai đó đã giúp John làm bài tập về nhà của anh ấy vào hôm qua." },
+            { en: "Why did he not dance at the disco?", vi: "Tại sao anh ấy đã không nhảy ở sàn nhảy?" },
+            { en: "He didn’t dance at the disco because he was tired.", vi: "Anh ấy đã không nhảy ở sàn nhảy vì anh ấy mệt." },
+            { en: "Where did she leave the suitcase?", vi: "Cô ấy đã để vali ở đâu?" },
+            { en: "She left her suitcase on the train.", vi: "Cô ấy đã để vali của mình trên tàu." },
+            { en: "How many eggs does she need to make two cakes?", vi: "Cô ấy cần bao nhiêu quả trứng để làm hai cái bánh?" },
+            { en: "She needs twelve eggs to make two cakes.", vi: "Cô ấy cần mười hai quả trứng để làm hai cái bánh." },
+            { en: "How much wine did they drink at the party last night?", vi: "Họ đã uống bao nhiêu rượu tại bữa tiệc tối qua?" },
+            { en: "They drank a lot of wine at the party last night.", vi: "Họ đã uống rất nhiều rượu tại bữa tiệc tối qua." },
+            { en: "When do you often drink coffee?", vi: "Bạn thường uống cà phê khi nào?" },
+            { en: "I often drink coffee in the morning.", vi: "Tôi thường uống cà phê vào buổi sáng." },
+            { en: "What is your favourite food?", vi: "Món ăn yêu thích của bạn là gì?" },
+            { en: "Beef noodle soupis my favourite food.", vi: "Phở bò là món ăn yêu thích của tôi." },
+            { en: "How does your lemonade taste?", vi: "Nước chanh của bạn có vị như thế nào?" },
+            { en: "My lemonade tastes a bit sour.", vi: "Nước chanh của tôi có vị hơi chua." },
+            { en: "Is there any milk in the fridge?", vi: "Có sữa trong tủ lạnh không?" },
+            { en: "No, there isn’t any milk in the fridge.", vi: "Không, không có sữa trong tủ lạnh." },
+            { en: "Would you like some cookies?", vi: "Bạn có muốn một ít bánh quy không?" },
+            { en: "No, thanks. I love cookies, but I’m full.", vi: "Không, cảm ơn. Tôi thích bánh quy, nhưng tôi đã no." },
+            { en: "How is the beef broth made?", vi: "Nước dùng bò được làm như thế nào?" },
+            { en: "The beef broth is made by stewing cow bones.", vi: "Nước dùng bò được làm bằng cách hầm xương bò." },
+            { en: "What's his telephone number?", vi: "Số điện thoại của anh ấy là gì?" },
+            { en: "His telephone number is 8259640.", vi: "Số điện thoại của anh ấy là 8259640." },
+            { en: "How far is it from your house to the movie theater?", vi: "Từ nhà bạn đến rạp chiếu phim là bao xa?" },
+            { en: "It’s about two kilometersfrom my house to the movie theater.", vi: "Khoảng hai km từ nhà tôi đến rạp chiếu phim." },
+            { en: "When will you go camping?", vi: "Khi nào bạn sẽ đi cắm trại?" },
+            { en: "I will go camping next Sunday.", vi: "Tôi sẽ đi cắm trại vào Chủ nhật tới." },
+            { en: "What's her date of birth?", vi: "Ngày sinh của cô ấy là gì?" },
+            { en: "Her date of birth is on August 21st.", vi: "Ngày sinh của cô ấy là 21 tháng 8." },
+            { en: "How old will she be on her next birthday?", vi: "Cô ấy sẽ bao nhiêu tuổi vào ngày sinh nhật tiếp theo?" },
+            { en: "She will be fourteen on her next birthday.", vi: "Cô ấy sẽ mười bốn tuổi vào ngày sinh nhật tiếp theo." },
+            { en: "What does your father do?", vi: "Bố bạn làm nghề gì?" },
+            { en: "My father isan engineer.", vi: "Bố tôi là một kỹ sư." },
+            { en: "What's your address?", vi: "Địa chỉ của bạn là gì?" },
+            { en: "My address is 10B Ly Thuong Kiet Street.", vi: "Địa chỉ của tôi là 10B phố Lý Thường Kiệt." },
+            { en: "Where does he work?", vi: "Anh ấy làm việc ở đâu?" },
+            { en: "He works in a hospital.", vi: "Anh ấy làm việc trong một bệnh viện." },
+            { en: "Where does Mai live?", vi: "Mai sống ở đâu?" },
+            { en: "Mai lives in the city.", vi: "Mai sống trong thành phố." },
+            { en: "Who works in a factory?", vi: "Ai làm việc trong một nhà máy?" },
+            { en: "Nam’s father works in a factory.", vi: "Bố của Nam làm việc trong một nhà máy." },
+            { en: "How many brothers and sisters do you have?", vi: "Bạn có bao nhiêu anh chị em?" },
+            { en: "I have two brothers and one sister", vi: "Tôi có hai anh trai và một chị gái." },
+            { en: "What does your house have?", vi: "Nhà bạn có gì?" },
+            { en: "My house has a yard.", vi: "Nhà tôi có một cái sân." },
+            { en: "What do they have on Tuesday?", vi: "Họ có môn gì vào thứ Ba?" },
+            { en: "They have literature on Tuesday.", vi: "Họ có môn Văn học vào thứ Ba." },
+            { en: "What do you watch every night?", vi: "Bạn xem gì mỗi tối?" },
+            { en: "I watch television every night.", vi: "Tôi xem TV mỗi tối." },
+            { en: "What do your brother and sister play after lunch?", vi: "Anh trai và chị gái của bạn chơi gì sau bữa trưa?" },
+            { en: "Her brother and sister play sports after lunch.", vi: "Anh trai và chị gái cô ấy chơi thể thao sau bữa trưa." },
+            { en: "What does his mother do every day?", vi: "Mẹ anh ấy làm gì mỗi ngày?" },
+            { en: "His mother does the housework every day.", vi: "Mẹ anh ấy làm việc nhà mỗi ngày." },
+            { en: "Who takes a shower every morning?", vi: "Ai tắm mỗi sáng?" },
+            { en: "Lan takes a shower every morning", vi: "Lan tắm mỗi sáng." },
+            { en: "What do your brother and you do every evening?", vi: "Anh trai và bạn làm gì mỗi tối?" },
+            { en: "My brother and I watch television every evening.", vi: "Anh trai và tôi xem TV mỗi tối." },
+            { en: "What time do they go to school?", vi: "Mấy giờ họ đi học?" },
+            { en: "They go to school at a quarter to seven.", vi: "Họ đi học lúc 6 giờ 45." },
+            { en: "How many cups are there on the table?", vi: "Có bao nhiêu cái tách trên bàn?" },
+            { en: "There are fourcups on the table.", vi: "Có bốn cái tách trên bàn." },
+            { en: "Where is Lan's sister?", vi: "Chị gái của Lan ở đâu?" },
+            { en: "Lan’s sister is in the kitchen.", vi: "Chị gái của Lan ở trong bếp." },
+            { en: "How old is your sister?", vi: "Chị gái bạn bao nhiêu tuổi?" },
+            { en: "My sister is fifteen years old.", vi: "Chị gái tôi mười lăm tuổi." },
+            { en: "Which grade are Nam and Lan in?", vi: "Nam và Lan học lớp mấy?" },
+            { en: "Nam and Lan are in grade six", vi: "Nam và Lan học lớp sáu." },
+            { en: "How is Thu's school?", vi: "Trường của Thu như thế nào?" },
+            { en: "Thu’s school is big and beautiful.", vi: "Trường của Thu lớn và đẹp." },
+            { en: "What time is it?", vi: "Bây giờ là mấy giờ?" },
+            { en: "It’s eight o’clock.", vi: "Bây giờ là tám giờ." },
+            { en: "How many girls are there in your class?", vi: "Có bao nhiêu cô gái trong lớp bạn?" },
+            { en: "There are 20 girls in my class.", vi: "Có 20 cô gái trong lớp tôi." },
+            { en: "When did you receive a letter from Lan?", vi: "Bạn đã nhận được thư của Lan khi nào?" },
+            { en: "I received a letter from Lan last week.", vi: "Tôi đã nhận được thư của Lan vào tuần trước." },
+            { en: "How often do you brush your teeth?", vi: "Bạn đánh răng bao nhiêu lần một ngày?" },
+            { en: "I brush my teeth twice a day.", vi: "Tôi đánh răng hai lần một ngày." },
+            { en: "What time does Nga have an appointment this monring?", vi: "Nga có cuộc hẹn lúc mấy giờ sáng nay?" },
+            { en: "Nga has an appointment at 10.30 this morning.", vi: "Nga có cuộc hẹn lúc 10 giờ 30 sáng nay." },
+            { en: "Why do you like \"Tom and Jerry\"?", vi: "Tại sao bạn thích 'Tom và Jerry'?" },
+            { en: "I like “Tom and Jerry” because it’s very interesting.", vi: "Tôi thích 'Tom và Jerry' vì nó rất thú vị." },
+            { en: "Who did you go to the disco with last night?", vi: "Tối qua bạn đã đi vũ trường với ai?" },
+            { en: "Last night I went to disco with my friend.", vi: "Tối qua tôi đã đi vũ trường với bạn của tôi." },
+            { en: "What did she worry about?", vi: "Cô ấy đã lo lắng về cái gì?" },
+            { en: "She worried about the next examination.", vi: "Cô ấy đã lo lắng về kỳ thi tiếp theo." },
+            { en: "What is she learning?", vi: "Cô ấy đang học gì?" },
+            { en: "She is learning Literature.", vi: "Cô ấy đang học Văn học." },
+        ];
+        let playerName = '';
+        let incorrectAnswers = [];
+        let currentSentenceIndex = 0;
+        let completedCount = 0;
+        let isPlaying = false;
+        let autoPlayInterval;
+        let wrongAttempts = 0;
+        const TOTAL_SENTENCES = sentences.length;
+
+        function showBubbleEffect() {
+            const container = document.getElementById('effect-container');
+            for (let i = 0; i < 25; i++) {
+                const bubble = document.createElement('div');
+                bubble.className = 'particle';
+                container.appendChild(bubble);
+
+                const size = Math.random() * 30 + 10;
+                bubble.style.width = `${size}px`;
+                bubble.style.height = `${size}px`;
+                bubble.style.left = `${Math.random() * 100}vw`;
+                bubble.style.setProperty('--x-end', `${(Math.random() - 0.5) * 200}px`);
+                bubble.style.background = `hsla(${Math.random() * 360}, 70%, 80%, 0.5)`;
+                
+                const animation = bubble.animate([
+                    { bottom: '-50px', opacity: 1 },
+                    { bottom: '100vh', opacity: 0 }
+                ], {
+                    duration: Math.random() * 3000 + 4000,
+                    easing: 'ease-in-out',
+                    delay: Math.random() * 500
+                });
+                
+                animation.onfinish = () => bubble.remove();
+            }
+        }
+
+        function playSentence() {
+            if (!isPlaying && sentences[currentSentenceIndex]) {
+                isPlaying = true;
+                const utterance = new SpeechSynthesisUtterance(sentences[currentSentenceIndex].en);
+                utterance.lang = 'en-US';
+                utterance.rate = 0.9;
+                utterance.onend = () => { isPlaying = false; };
+                speechSynthesis.speak(utterance);
+            }
+        }
+
+        function startAutoPlay() {
+            if (autoPlayInterval) clearInterval(autoPlayInterval);
+            autoPlayInterval = setInterval(() => { if (!isPlaying) playSentence(); }, 5000);
+        }
+
+        function stopAutoPlay() {
+            if (autoPlayInterval) clearInterval(autoPlayInterval);
+        }
+
+        function checkAnswer() {
+            const checkBtn = document.getElementById('checkBtn');
+            if (checkBtn.disabled) return;
+            const userInput = document.getElementById('userInput').value.trim();
+            const result = document.getElementById('result');
+            const currentSentence = sentences[currentSentenceIndex];
+            const normalizeApostrophes = (str) => str.replace(/[’‘`]/g, "'");
+
+            if (normalizeApostrophes(userInput) === normalizeApostrophes(currentSentence.en)) {
+                stopAutoPlay();
+                checkBtn.disabled = true;
+                document.getElementById('hintBtn').disabled = true;
+                document.getElementById('playSoundBtn').disabled = true;
+                result.textContent = "Chính xác!";
+                result.className = 'correct';
+                showBubbleEffect();
+                if (wrongAttempts < 2) {
+                    completedCount++;
+                    document.getElementById('score-counter').textContent = `Điểm: ${completedCount}`;
+                }
+                wrongAttempts = 0;
+                setTimeout(() => {
+                    currentSentenceIndex++;
+                    if (currentSentenceIndex >= TOTAL_SENTENCES) {
+                        let reviewButtonHTML = '';
+                        if (incorrectAnswers.length > 0) {
+                            reviewButtonHTML = `<button class="btn-hint" onclick="showReviewModal()">Xem lại lỗi sai</button>`;
+                        }
+                        document.getElementById('game-container').innerHTML = `<h1>Chúc mừng, ${playerName}!</h1><p>Bạn đã đạt được ${completedCount} trên ${TOTAL_SENTENCES} điểm!</p><div class="button-group"><button class="btn-check" onclick="resetGame()">Chơi lại</button>${reviewButtonHTML}</div>`;
+                    } else {
+                        updateGameScreen();
+                        playSentence();
+                        startAutoPlay();
+                    }
+                }, 2000);
+            } else {
+                wrongAttempts++;
+                result.textContent = `Không đúng, thử lại nhé! (Còn ${3 - wrongAttempts} lần thử)`;
+                result.className = 'incorrect';
+                if (wrongAttempts >= 3) {
+                    stopAutoPlay();
+                    checkBtn.disabled = true;
+                    document.getElementById('hintBtn').disabled = true;
+                    document.getElementById('playSoundBtn').disabled = true;
+                    if (!incorrectAnswers.some(item => item.en === currentSentence.en)) {
+                        incorrectAnswers.push(currentSentence);
+                    }
+                    wrongAttempts = 0;
+                    result.textContent = "Chuyển sang câu tiếp theo...";
+                    setTimeout(() => {
+                        currentSentenceIndex++;
+                        if (currentSentenceIndex >= TOTAL_SENTENCES) {
+                            let reviewButtonHTML = '';
+                            if (incorrectAnswers.length > 0) {
+                                reviewButtonHTML = `<button class="btn-hint" onclick="showReviewModal()">Xem lại lỗi sai</button>`;
+                            }
+                            document.getElementById('game-container').innerHTML = `<h1>Trò chơi kết thúc, ${playerName}!</h1><p>Bạn đã đạt được ${completedCount} trên ${TOTAL_SENTENCES} điểm.</p><div class="button-group"><button class="btn-check" onclick="resetGame()">Chơi lại</button>${reviewButtonHTML}</div>`;
+                        } else {
+                            updateGameScreen();
+                            playSentence();
+                            startAutoPlay();
+                        }
+                    }, 2000);
+                }
+            }
+        }
+
+        function updateGameScreen() {
+            if (document.getElementById('userInput')) {
+                const currentData = sentences[currentSentenceIndex];
+                document.getElementById('userInput').value = '';
+                document.getElementById('vietnamese-translation').textContent = currentData.vi;
+                document.getElementById('hint').textContent = '';
+                document.getElementById('result').textContent = '';
+                document.getElementById('question-counter').textContent = `Câu ${currentSentenceIndex + 1} / ${TOTAL_SENTENCES}`;
+                document.getElementById('score-counter').textContent = `Điểm: ${completedCount}`;
+                const checkBtn = document.getElementById('checkBtn');
+                if (checkBtn) checkBtn.disabled = false;
+                const hintBtn = document.getElementById('hintBtn');
+                if (hintBtn) hintBtn.disabled = false;
+                const playSoundBtn = document.getElementById('playSoundBtn');
+                if (playSoundBtn) playSoundBtn.disabled = false;
+            }
+        }
+
+        function showHint() {
+            document.getElementById('hint').innerHTML = `Gợi ý: ${sentences[currentSentenceIndex].en}`;
+        }
+        
+        function clearHint() {
+            const hintEl = document.getElementById('hint');
+            if(hintEl) {
+                hintEl.innerHTML = '';
+            }
+        }
+        // New function to display a custom error message
+        function showNameError() {
+            const nameErrorEl = document.getElementById('name-error');
+            if (nameErrorEl) {
+                nameErrorEl.textContent = "Vui lòng nhập tên của bạn!";
+            }
+        }
+        // New function to clear the name error message
+        function clearNameError() {
+            const nameErrorEl = document.getElementById('name-error');
+            if (nameErrorEl) {
+                nameErrorEl.textContent = "";
+            }
+        }
+        
+        function submitName() {
+            const nameInput = document.getElementById('playerNameInput');
+            playerName = nameInput.value.trim();
+            if (playerName) {
+                clearNameError();
+                startGame();
+            } else {
+                showNameError();
+            }
+        }
+
+        function startGame() {
+            wrongAttempts = 0;
+            currentSentenceIndex = 0;
+            completedCount = 0;
+            incorrectAnswers = [];
+            const currentData = sentences[currentSentenceIndex];
+            document.getElementById('game-container').innerHTML = `
+                <h1>Playground Fun</h1>
+                <p>Listen and type what you hear.<span class="instruction-vi">Hãy lắng nghe và gõ lại câu bạn nghe được.</span></p>
+                <p id="vietnamese-translation">${currentData.vi}</p>
+                <input type="text" id="userInput" placeholder="Gõ câu trả lời tại đây...">
+                <div class="button-group">
+                    <button id="playSoundBtn" class="btn-play" onclick="playSentence()">&#9658; Nghe lại</button>
+                    <button id="checkBtn" class="btn-check" onclick="checkAnswer()">Kiểm tra</button>
+                    <button id="hintBtn" class="btn-hint">Gợi ý</button>
+                    <button id="resetBtn" class="btn-reset" onclick="resetGame()">Chơi lại</button>
+                </div>
+                <div class="progress-display">
+                    <p id="question-counter">Câu ${currentSentenceIndex + 1} / ${TOTAL_SENTENCES}</p>
+                    <p id="score-counter">Điểm: ${completedCount}</p>
+                </div>
+                <p id="hint"></p>
+                <p id="result"></p>
+            `;
+            const userInputEl = document.getElementById('userInput');
+            userInputEl.addEventListener('keypress', handleKeyPress);
+            userInputEl.addEventListener('focus', clearHint);
+
+            const translationEl = document.getElementById('vietnamese-translation');
+            if (translationEl) {
+                translationEl.addEventListener('copy', (event) => event.preventDefault());
+            }
+
+            const hintBtn = document.getElementById('hintBtn');
+            if (hintBtn) {
+                hintBtn.addEventListener('mousedown', showHint);
+                hintBtn.addEventListener('mouseup', clearHint);
+                hintBtn.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    showHint();
+                });
+                hintBtn.addEventListener('touchend', clearHint);
+            }
+
+            playSentence();
+            startAutoPlay();
+        }
+
+        function resetGame() {
+            stopAutoPlay();
+            speechSynthesis.cancel();
+            document.getElementById('game-container').innerHTML = `
+                <h1>Welcome to Playground Fun!</h1>
+                <p>Please enter your name to start.</p>
+                <input type="text" id="playerNameInput" placeholder="Your Name" value="${playerName}">
+                <p id="name-error" class="error-message"></p>
+                <button class="btn-check" onclick="submitName()">Start Game</button>
+            `;
+        }
+        
+        function showReviewModal() {
+            const modal = document.getElementById('reviewModal');
+            const list = document.getElementById('mistakeList');
+            list.innerHTML = '';
+            incorrectAnswers.forEach(item => {
+                const listItem = document.createElement('li');
+                listItem.innerHTML = `<strong>Đúng:</strong> ${item.en}<br><em>${item.vi}</em>`;
+                list.appendChild(listItem);
+            });
+            modal.style.display = 'flex';
+        }
+
+        function closeReviewModal() {
+            document.getElementById('reviewModal').style.display = 'none';
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault(); 
+                checkAnswer();
+            }
+        }
+    </script>
+</body>
+</html>
